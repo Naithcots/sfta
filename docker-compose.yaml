@@ -2,10 +2,12 @@ services:
   app:
     build: '.'
     ports:
-      - '5000:8081'
+      - '127.0.0.1:8080:8080'
+    volumes:
+      - './uploads:/app/uploads:rw'
     environment:
       - NODE_ENV = production
       - HOST = 0.0.0.0
-      - PORT = 8081
+      - PORT = 8080
       - API_KEY = <openssl rand -hex 64>
       - WEB_DOMAIN_URL = <replace-based-on-web-server-config>

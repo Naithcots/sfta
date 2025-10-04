@@ -1,19 +1,27 @@
-events {}
+# /etc/nginx/sites-available/sfta
 
-http {
-    server {
-        listen 80;
-        server_name _;
+server {
+    listen 80;
+    server_name <replace-with-your-domain>;
+    return 301 https://$host$request_uri;
+}
 
-        location / {
-            # Replace port if changed
-            proxy_pass http://localhost:5000;
-        }
+server {
+    listen 443 ssl;
+    server_name <replace-with-your-domain>;
 
-        location /uploads {
-            # Replace with the path to your uploads directory
-            alias /var/www/sfta/uploads/;
-            autoindex off;
-        }
+    ssl_certificate /etc/letsencrypt/live/<replace-with-your-domain>/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/<replace-with-your-domain>/privkey.pem;
+
+    location / {
+        # Replace port 8080 if changed config
+        proxy_pass http://127.0.0.1:8080;
+        include proxy_params;
+    }
+
+    location /uploads {
+        # Replace '/var/www/sfta' with the app root path
+        alias /var/www/sfta/uploads/;
+        autoindex off;
     }
 }
