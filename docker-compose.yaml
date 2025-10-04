@@ -1,0 +1,11 @@
+services:
+  app:
+    build: '.'
+    ports:
+      - '5000:8081'
+    environment:
+      - NODE_ENV = production
+      - HOST = 0.0.0.0
+      - PORT = 8081
+      - API_KEY = <openssl rand -hex 64>
+      - WEB_DOMAIN_URL = <replace-based-on-web-server-config>

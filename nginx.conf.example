@@ -1,0 +1,19 @@
+events {}
+
+http {
+    server {
+        listen 80;
+        server_name _;
+
+        location / {
+            # Replace port if changed
+            proxy_pass http://localhost:5000;
+        }
+
+        location /uploads {
+            # Replace with the path to your uploads directory
+            alias /var/www/sfta/uploads/;
+            autoindex off;
+        }
+    }
+}
