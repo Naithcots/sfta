@@ -14,14 +14,15 @@ server {
     ssl_certificate_key /etc/letsencrypt/live/<replace-with-your-domain>/privkey.pem;
 
     location / {
-        # Replace port 8080 if changed config
+        # If using docker compose, use the host port, otherwise use the 'PORT' environment variable
         proxy_pass http://127.0.0.1:8080;
         include proxy_params;
     }
 
+    # Match location with a path from the 'WEB_UPLOADS_URL' environment variable
     location /uploads {
-        # Replace '/var/www/sfta' with the app root path
-        alias /var/www/sfta/uploads/;
+        # If using docker compose, use the host volume uploads path, otherwise use the 'UPLOADS_DIR' environment variable
+        alias /var/www/sfta/uploads;
         autoindex off;
     }
 }
