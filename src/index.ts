@@ -2,13 +2,13 @@ import multipart from '@fastify/multipart';
 import fastify from 'fastify';
 import fs from 'node:fs/promises';
 import os from 'node:os';
-import { getConfig } from './configuration.js';
+import { constants, getConfig } from './configuration.js';
 import protectedRoutes from './routes/protected.js';
 
 const config = await getConfig();
 
 try {
-  await fs.access(config.uploadsDir, fs.constants.R_OK | fs.constants.W_OK);
+  await fs.access(constants.uploadsDir, fs.constants.R_OK | fs.constants.W_OK);
   console.log(`Upload directory access permissions correct!`);
 } catch (error) {
   const { username } = os.userInfo();
@@ -32,13 +32,14 @@ server.register(protectedRoutes);
 
 server.listen(
   {
-    host: config.host,
-    port: config.port,
+    host: constants.host,
+    port: constants.port,
   },
-  (err) => {
+  (err, address) => {
     if (err) {
       server.log.error(err);
       process.exit(1);
     }
+    server.log.info(`Server listening at ${address}`);
   },
 );

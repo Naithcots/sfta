@@ -7,76 +7,67 @@ A lightweight file upload API built with Fastify and TypeScript - ideal for smal
 - Single file upload endpoint
 - Protection via a custom `x-api-key` header
 - Configurable upload path and file size limit
-- Serve uploads using your preferred web server (e.g. Nginx)
+- Serve app using your preferred web server (e.g. Nginx)
 - Simple Docker deployment
 
 ## ⚙️ Installation
 
-### Using Docker
-
-1. **Open the `docker-compose.yaml` and configure host port:**
+1. **Rename `.env.example` file to `.env` and configure variables:**
 
    ```yaml
-   ports:
-     - '127.0.0.1:<custom-port>:80'
+    # Do not touch!
+    NODE_ENV = production
+
+    # Node.js version used by the container
+    NODE_VERSION = 24-slim
+
+    # Generate a new key with `openssl rand -hex 64`
+    API_KEY = 
+
+    # Maximum file size for a single file in bytes (default: 10MB)
+    FILE_SIZE_LIMIT = 1e+7 
+
+    # Local filesystem directory to store uploaded files
+    # The container requires read/write access to this directory
+    UPLOADS_DIR = /var/www/sfta/uploads
+
+    # Exposed HTTP host port
+    HTTP_HOST_PORT = 8080
    ```
 
-2. **Set the upload directory (host volume path):**
+2. **Set up host web server:**
 
-   ```yaml
-   volumes:
-     - '<custom-safe-file-system-path>:/app/uploads:rw'
-   ```
+    Additional host web server configuration is required. The container exposes single host port for a web server to handle HTTP requests.
 
-   > The configured path must have **read permissions** for a web server user in order to find and serve uploaded files.
+    ```conf
+    # Example host nginx configuration
+    # /etc/nginx/sites-enabled/sfta
 
-3. **Configure the environment variables:**
+    server {
+        listen 80;
+        server_name <your-domain>; # Replace with your domain
+        return 301 https://$host$request_uri;
+    }
 
-   ```yaml
-   environment:
-   API_KEY: <generated-api-key> # e.g. openssl rand -hex 64
-   FILE_SIZE_LIMIT: <value-in-bytes> # e.g. 1e+7 (10MB)
-   WEB_UPLOADS_URL: <web-server-uploads-location> # e.g. https://example.com/uploads
-   ```
+    server {
+        listen 443 ssl;
+        server_name <your-domain>; # Replace with your domain
 
-   > Other environment variables in this file are used internally by the container and can be ignored.
+        # Quickly generate certificates with certbot or include wildcards:
+        ssl_certificate /etc/letsencrypt/live/<your-domain>/fullchain.pem;
+        ssl_certificate_key /etc/letsencrypt/live/<your-domain>/privkey.pem;
 
-4. **Set up the web server**
-   Example Nginx configuration:
+        location / {
+            proxy_pass http://127.0.0.1:<HTTP_HOST_PORT>; # Replace with `HTTP_HOST_PORT` variable from .env file
+            include proxy_params;
+        }
+    }
+    ```
 
-   ```conf
-   # /etc/nginx/sites-enabled/sfta
-
-   server {
-       listen 80;
-       server_name <your-domain>; # Match with 'WEB_UPLOADS_URL' from step 3
-       return 301 https://$host$request_uri;
-   }
-
-   server {
-       listen 443 ssl;
-       server_name <your-domain>; # Match with 'WEB_UPLOADS_URL' from step 3
-
-       ssl_certificate /etc/letsencrypt/live/<your-domain>/fullchain.pem;
-       ssl_certificate_key /etc/letsencrypt/live/<your-domain>/privkey.pem;
-
-       location / {
-           proxy_pass http://127.0.0.1:<custom-port>; # Match port from step 1
-           include proxy_params;
-       }
-
-
-       location /uploads { # Match with 'WEB_UPLOADS_URL' from step 4
-           alias <custom-safe-file-system-path>; # Match path from step 2
-           autoindex off;
-       }
-   }
-   ```
-
-5. **Start the container:**
+3. **Start the container:**
 
    ```bash
-   sudo docker compose up -d
+   sudo docker compose -f compose.yaml -f compose.prod.yaml up -d
    ```
 
 ## 📤 Usage
@@ -99,7 +90,7 @@ const response = await fetch('https://example.com/upload', {
 });
 
 console.log(await response.json());
-// { url: https://example.com/uploads/<random-file-name>.jpg }
+// { url: /uploads/<random-file-name>.jpg }
 ```
 
 ### Get an uploaded file

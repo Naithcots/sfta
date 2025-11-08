@@ -1,22 +1,20 @@
 import * as z from 'zod';
 
+export const constants = {
+  host: '0.0.0.0',
+  port: 80,
+  uploadsDir: '/var/www/uploads',
+};
+
 const variables = {
   nodeEnv: process.env.NODE_ENV,
-  host: process.env.HOST,
-  port: process.env.PORT,
   apiKey: process.env.API_KEY,
-  uploadsDir: process.env.UPLOADS_DIR,
-  webUploadsUrl: process.env.WEB_UPLOADS_URL,
   fileSizeLimit: process.env.FILE_SIZE_LIMIT,
 };
 
 const schema = z.object({
   nodeEnv: z.enum(['development', 'production']),
-  host: z.string(),
-  port: z.coerce.number().positive().max(65535),
   apiKey: z.hex().min(32),
-  uploadsDir: z.string(),
-  webUploadsUrl: z.url(),
   fileSizeLimit: z.coerce.number().positive(),
 });
 

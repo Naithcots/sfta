@@ -1,20 +1,34 @@
-FROM node:slim AS base
+ARG NODE_VERSION=24-slim
+
+FROM node:${NODE_VERSION} AS base
 ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
-RUN corepack enable
+RUN corepack enable pnpm
 
-COPY . /app
+RUN adduser --system --uid 1001 --home /home/nodejs nodejs
+USER nodejs
+
 WORKDIR /app
 
-FROM base AS prod-deps
-RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --prod --frozen-lockfile
+FROM base AS deps
+COPY package.json pnpm-lock.yaml ./
+RUN pnpm install --frozen-lockfile --prod
 
 FROM base AS build
-RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile
-RUN pnpm run build
+COPY package.json pnpm-lock.yaml ./
+RUN pnpm install
+COPY . .
+RUN pnpm build
 
-FROM base
-COPY --from=prod-deps /app/node_modules /app/node_modules
-COPY --from=build /app/dist /app/dist
+FROM base AS dev
+ENV NODE_ENV=development
+COPY package.json pnpm-lock.yaml ./
+RUN pnpm install
+COPY . .
+CMD [ "pnpm", "dev" ]
 
+FROM base AS prod
+ENV NODE_ENV=production
+COPY --from=deps /app/node_modules ./node_modules
+COPY --from=build /app/dist ./dist
 CMD [ "pnpm", "start" ]

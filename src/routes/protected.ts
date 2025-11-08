@@ -3,6 +3,7 @@ import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import { pipeline } from 'node:stream/promises';
+import { constants } from '../configuration.js';
 
 const protectedRoutes: FastifyPluginAsync = async (server) => {
   server.addHook('onRequest', async (req, reply) => {
@@ -26,7 +27,7 @@ const protectedRoutes: FastifyPluginAsync = async (server) => {
 
     await pipeline(
       data.file,
-      fs.createWriteStream(`${server.config.uploadsDir}/${fileName}`, {
+      fs.createWriteStream(`${constants.uploadsDir}/${fileName}`, {
         mode: 0o644,
       }),
     );
@@ -35,7 +36,11 @@ const protectedRoutes: FastifyPluginAsync = async (server) => {
     );
     return reply
       .status(201)
-      .send({ url: `${server.config.webUploadsUrl}/${fileName}` });
+      .send({ url: `/uploads/${encodeURIComponent(fileName)}` });
+  });
+
+  server.get('/healthcheck', () => {
+    return { status: 'ok' };
   });
 };
 

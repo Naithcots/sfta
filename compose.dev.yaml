@@ -1,0 +1,18 @@
+services:
+  app:
+    build:
+      context: .
+      target: dev
+    develop:
+      watch:
+        - action: sync
+          path: src
+          target: /app/src
+          initial_sync: true
+        - action: sync+restart
+          path: nginx.conf
+          target: /etc/nginx/nginx.conf
+        - action: rebuild
+          path: package.json
+        - action: restart
+          path: .env
